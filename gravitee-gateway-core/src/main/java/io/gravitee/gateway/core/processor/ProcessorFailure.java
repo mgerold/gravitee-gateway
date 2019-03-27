@@ -15,6 +15,8 @@
  */
 package io.gravitee.gateway.core.processor;
 
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -25,5 +27,7 @@ public interface ProcessorFailure {
 
     String message();
 
-    String contentType();
+    String key();
+
+    Map<String, Object> parameters();
 }

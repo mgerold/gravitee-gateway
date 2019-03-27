@@ -22,8 +22,10 @@ import io.gravitee.gateway.core.processor.StreamableProcessorDecorator;
 import io.gravitee.gateway.core.processor.chain.DefaultStreamableProcessorChain;
 import io.gravitee.gateway.core.processor.chain.StreamableProcessorChain;
 import io.gravitee.gateway.handlers.api.processor.cors.CorsSimpleRequestProcessor;
+import io.gravitee.gateway.handlers.api.processor.error.templates.ResponseTemplateBasedFailureProcessor;
+import io.gravitee.gateway.handlers.api.processor.error.SimpleFailureProcessor;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,19 +34,22 @@ import java.util.List;
  */
 public class OnErrorProcessorChainFactory extends ApiProcessorChainFactory {
 
-    private List<StreamableProcessor<ExecutionContext, Buffer>> processors;
+    private final List<StreamableProcessor<ExecutionContext, Buffer>> processors = new ArrayList<>();
 
     public void afterPropertiesSet() {
         if (api.getProxy().getCors() != null && api.getProxy().getCors().isEnabled()) {
-            processors = Collections.singletonList(
-                    new StreamableProcessorDecorator<>(new CorsSimpleRequestProcessor(api.getProxy().getCors())));
+            processors.add(new StreamableProcessorDecorator<>(new CorsSimpleRequestProcessor(api.getProxy().getCors())));
+        }
+
+        if (api.getResponseTemplates() != null && ! api.getResponseTemplates().isEmpty()) {
+            processors.add(new StreamableProcessorDecorator<>(new ResponseTemplateBasedFailureProcessor(api.getResponseTemplates())));
         } else {
-            processors = Collections.emptyList();
+            processors.add(new StreamableProcessorDecorator<>(new SimpleFailureProcessor()));
         }
     }
 
     @Override
-    public StreamableProcessorChain<ExecutionContext, Buffer, StreamableProcessor<ExecutionContext, Buffer>> create() {
+    public StreamableProcessorChain<ExecutionContext, Buffer, StreamableProcessor<ExecutionContext, Buffer>>    create() {
         return new DefaultStreamableProcessorChain<>(processors);
     }
 }
